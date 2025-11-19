@@ -1,0 +1,26 @@
+# Load libraries
+library(dplyr)
+library(readr)   # faster CSV reader
+
+stats::filter()   # use filter from stats
+base::union()     # use union from base
+
+
+# Read the dataset
+df <- read_csv("data/US_Accidents_March23.csv")
+
+# Filter for Birmingham, AL and select relevant columns
+df_bham <- df %>%
+  filter(State == "AL", City == "Birmingham") %>%
+  select(
+    Start_Time,
+    End_Time,
+    State,
+    City,
+    Weather_Condition,
+    Severity,
+    Temperature.F.
+  )
+
+# Display first 10 rows
+print(head(df_bham, 10))
