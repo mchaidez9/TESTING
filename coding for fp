@@ -1,0 +1,17 @@
+library(dplyr)
+
+df <- read.csv("data/US_Accidents_March23.csv")
+
+df_bham <- df %>%
+    filter(State == "AL", City == "Birmingham") %>%
+    select(
+        Start_Time,
+        End_Time,
+        State,
+        City,
+        Weather_Condition,
+        Severity,
+        Temperature.F.,
+    )
+
+print(head(df_bham))
