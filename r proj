@@ -1,26 +1,118 @@
-# Load libraries
 library(dplyr)
-library(readr)   # faster CSV reader
+library(lubridate)
+library(ggplot2)
 
-stats::filter()   # use filter from stats
-base::union()     # use union from base
+df <- read.csv("data/US_Accidents_March23.csv")
 
-
-# Read the dataset
-df <- read_csv("data/US_Accidents_March23.csv")
-
-# Filter for Birmingham, AL and select relevant columns
 df_bham <- df %>%
-  filter(State == "AL", City == "Birmingham") %>%
-  select(
-    Start_Time,
-    End_Time,
-    State,
-    City,
-    Weather_Condition,
-    Severity,
-    Temperature.F.
-  )
+    filter(State == "AL", City == "Birmingham") %>%
+    select(
+        Start_Time,
+        End_Time,
+        State,
+        City,
+        Weather_Condition,
+        Severity,
+        Temperature.F.,
+    )
 
-# Display first 10 rows
-print(head(df_bham, 10))
+df_bham <- df_bham %>%
+    rename(Temperature = Temperature.F.)
+#cleaning of data
+df_bham_clean <- df_bham %>%
+    mutate(
+        Start_Time = ymd_has(Start_Time), 
+        Month = factor(month(Start_Time),
+                       levels = 1:12
+                       labels - month.abb)
+         ) %>%
+
+filter(!is.na(Temperature)) %>%
+filter(Temperature >= 10, Temperature <= 120)
+
+df_bham_clean %>%
+    sample_n(10)
+
+next cell
+
+#histogram temp
+ggplot(df_bham_clean, aes(x = Temperature)) +
+    geom_histogram(binwidth = 2, fill = "lightblue", color = "black") +
+    labs(
+        title = "Histogram of Accident Temperatures in Birmingham"
+        x = "Month"
+        y = "Temperature (F)"
+    )
+#box plot temp
+ggplot(df_bham_clean, aes(x = Month, y = Temperature)) +
+    geom_boxplot(fill = "lightblue")
+    labs(
+        title = "Accident Temperature by Month (Birmingham, AL)",
+        x = "Month"
+        y = "Temperature"
+    )
+#bar plot weather condition 
+ggplot(df_bham_clean, aes(x = Weather_Condition)) + 
+    geom_bar() + 
+    coord_flip() +
+    labs(
+        title = "Weather Condition During Accidents (Birmingham,AL)",
+        x = "Weather Conditions",
+        y = "Number of Accidents"
+    )
+#scatter plot: temp. vs sever.
+ggplot(df_bham_clean, aes(x = Temperature, y = Severity)) +
+    geom_point(alpha = 0.4) +
+    geom_smooth(method = "lm", se = TRUE) +
+    labs(
+        title = "Temperature vs Accident Severity (Birmingham, AL)",
+        x = "Temperature (F)" , 
+        y = "Severity" 
+    )
+
+next cell
+
+#mean median 
+median_temp <- median(df_bham_clean$Temperature)
+mean_temp <- mean(df_bham_clean$Temperature)
+sd_temp <- sd(df_bham_clean$Temperature)
+quantiles <- quantile(df_bham_clean$Temperature, c(0.25, 0.5, 0.75))
+median_temp
+mean_temp
+sd_temp
+quantiles 
+#frequncy and proporion
+weather_counts <- table(df_bham_clean$Temperature)
+weather_props <- prop.table(df_bham_clean$Temperature)
+weather_counts
+weather_props
+
+next cell
+
+t_test_results <- t.test(
+    df_bham_clean$Temperature,
+    mu=68
+    alternative = "less"
+)
+t_test_results
+
+#specifics
+t_test_results$statsitc
+t_test_results$p.value
+t_test_results$conf.int
+mean(df_bham_clean$Temperature)
+
+next cell
+
+#linear regression
+lm_model <- lm(
+    Temperature ~ Month + Weather_Condition + Severity,
+    data = df_bham_clean
+)
+
+summary(lm_model)
+AIC(lm_model)
+#diagonistic
+par(mfrow = c(2,1))
+plot(lm_model)
+par(mfrow = c(1,1))
